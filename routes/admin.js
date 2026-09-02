@@ -4,8 +4,6 @@ const { body, param } = require('express-validator');
 const multer = require('multer');
 const path = require('path');
 const cloudinary = require('../config/cloudinary');
-const multer = require('multer');
-const path = require('path');
 const auth = require('../middleware/auth');
 
 // Import controllers
