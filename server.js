@@ -30,7 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 // Serve uploaded images
-app.use('/uploads', express.static(uploadDir));
+//app.use('/uploads', express.static(uploadDir));
 
 // Mount routes
 app.use('/api/auth', authRoutes);
