@@ -3,6 +3,9 @@ const router = express.Router();
 const { body, param } = require('express-validator');
 const multer = require('multer');
 const path = require('path');
+const cloudinary = require('../config/cloudinary');
+const multer = require('multer');
+const path = require('path');
 const auth = require('../middleware/auth');
 
 // Import controllers
@@ -14,14 +17,16 @@ const subscriberController = require('../controllers/subscriberController');
 const siteSettingsController = require('../controllers/siteSettingsController');
 const userController = require('../controllers/userController');
 
-// Multer configuration for image uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');   // folder must exist
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname);
-    cb(null, uniqueName);
+// Multer memory storage (no disk)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },  // 5 MB
+  fileFilter: (req, file, cb) => {
+    const allowed = /jpeg|jpg|png|gif|webp/;
+    const ext = allowed.test(path.extname(file.originalname).toLowerCase());
+    const mime = allowed.test(file.mimetype);
+    if (ext && mime) return cb(null, true);
+    cb(new Error('Only image files are allowed'));
   }
 });
 const upload = multer({
@@ -41,15 +46,34 @@ const upload = multer({
 // ========================
 router.use(auth);
 
-// File upload endpoint
-router.post('/upload', upload.single('image'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'No image uploaded' });
-  }
-  const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-  res.json({ image_url: imageUrl });
-});
+// Helper to upload buffer to Cloudinary
+const uploadToCloudinary = (buffer, folder = 'general') => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+};
 
+// File upload endpoint (now Cloudinary)
+router.post('/upload', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image uploaded' });
+    }
+
+    const imageUrl = await uploadToCloudinary(req.file.buffer, 'tortoise_project');
+    res.json({ image_url: imageUrl });
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    res.status(500).json({ message: 'Image upload failed' });
+  }
+});
 // Hero slides
 router.get('/hero/:pageId', heroController.getByPage);
 router.put('/hero/:pageId/:slideIndex', [
