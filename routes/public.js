@@ -5,6 +5,7 @@ const heroController = require('../controllers/heroController');
 const highlightController = require('../controllers/highlightController');
 const newsController = require('../controllers/newsController');
 const partnerController = require('../controllers/partnerController');
+const contactController = require('../controllers/contactController');
 const subscriberController = require('../controllers/subscriberController');
 const siteSettingsController = require('../controllers/siteSettingsController');
 
@@ -36,5 +37,12 @@ router.post('/subscribe', [
 
 // Site settings (public)
 router.get('/settings', siteSettingsController.get);
+// Contact form (support/volunteer)
+router.post('/contact', [
+  body('form_type').isIn(['support', 'volunteer']).withMessage('Invalid form type'),
+  body('full_name').notEmpty().withMessage('Full name is required'),
+  body('email').isEmail().withMessage('A valid email is required'),
+  body('message').optional()
+], contactController.sendMessage);
 
 module.exports = router;
