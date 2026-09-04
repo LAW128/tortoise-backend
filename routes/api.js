@@ -51,4 +51,7 @@ router.post('/contact', [
   body('message').optional()
 ], contactController.sendMessage);
 
+// Temporary test route
+router.get('/pingtest', (req, res) => res.json({ message: 'pong' }));
+
 module.exports = router;
