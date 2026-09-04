@@ -12,7 +12,7 @@ const apiRoutes = require('./routes/api');  // Public API (renamed from public)
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Ensure uploads directory exists
+// Ensure uploads directory exists (not used if using Cloudinary, but harmless)
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -26,10 +26,18 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Prevent caching of API responses
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+
 // Serve static frontend files (HTML, CSS, JS, images, sitemap, robots)
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
-// Serve uploaded images
+// Serve uploaded images (disabled because we use Cloudinary)
 //app.use('/uploads', express.static(uploadDir));
 
 // Mount routes
