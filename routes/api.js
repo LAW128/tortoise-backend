@@ -54,4 +54,13 @@ router.post('/contact', [
 // Temporary test route
 router.get('/pingtest', (req, res) => res.json({ message: 'pong' }));
 
+// Temporary debug route to view the file content
+router.get('/debug-file', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(__dirname, 'api.js');
+  const content = fs.readFileSync(filePath, 'utf8');
+  res.type('text/plain').send(content);
+});
+
 module.exports = router;
