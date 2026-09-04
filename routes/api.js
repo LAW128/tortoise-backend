@@ -1,10 +1,5 @@
 const express = require('express');
 const router = express.Router();
-// Debug middleware: log all requests to this router
-router.use((req, res, next) => {
-  console.log(`[API Router] ${req.method} ${req.originalUrl}`);
-  next();
-});
 const { body, validationResult } = require('express-validator');
 const contactController = require('../controllers/contactController');
 const heroController = require('../controllers/heroController');
@@ -14,7 +9,9 @@ const partnerController = require('../controllers/partnerController');
 const subscriberController = require('../controllers/subscriberController');
 const siteSettingsController = require('../controllers/siteSettingsController');
 
+// ========================
 // Public routes
+// ========================
 
 // Hero slides
 router.get('/hero/:pageId', heroController.getByPage);
@@ -55,23 +52,5 @@ router.post('/contact', [
   body('email').isEmail().withMessage('A valid email is required'),
   body('message').optional()
 ], contactController.sendMessage);
-
-// Temporary test route
-router.get('/pingtest', (req, res) => res.json({ message: 'pong' }));
-
-// Temporary debug route to view the file content
-router.get('/debug-file', (req, res) => {
-  const fs = require('fs');
-  const path = require('path');
-  const filePath = path.join(__dirname, 'api.js');
-  const content = fs.readFileSync(filePath, 'utf8');
-  res.type('text/plain').send(content);
-});
-
-// Temporary test route for POST
-router.post('/contact-test', (req, res) => {
-  console.log('contact-test route hit');
-  res.json({ message: 'contact-test works' });
-});
 
 module.exports = router;
