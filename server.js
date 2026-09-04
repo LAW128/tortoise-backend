@@ -3,11 +3,13 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const { body } = require('express-validator');
+const contactController = require('./controllers/contactController');
 
 // Import routes
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
-const apiRoutes = require('./routes/api');  // Public API (renamed from public)
+const apiRoutes = require('./routes/api');  // Public API
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,6 +35,14 @@ app.use('/api', (req, res, next) => {
   res.set('Expires', '0');
   next();
 });
+
+// ✅ CONTACT ROUTE DIRECTLY ON APP (guaranteed to work)
+app.post('/api/contact', [
+  body('form_type').isIn(['support', 'volunteer']).withMessage('Invalid form type'),
+  body('full_name').notEmpty().withMessage('Full name is required'),
+  body('email').isEmail().withMessage('A valid email is required'),
+  body('message').optional()
+], contactController.sendMessage);
 
 // Serve static frontend files (HTML, CSS, JS, images, sitemap, robots)
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
