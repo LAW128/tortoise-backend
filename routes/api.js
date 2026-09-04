@@ -1,5 +1,10 @@
 const express = require('express');
 const router = express.Router();
+// Debug middleware: log all requests to this router
+router.use((req, res, next) => {
+  console.log(`[API Router] ${req.method} ${req.originalUrl}`);
+  next();
+});
 const { body, validationResult } = require('express-validator');
 const contactController = require('../controllers/contactController');
 const heroController = require('../controllers/heroController');
@@ -61,6 +66,12 @@ router.get('/debug-file', (req, res) => {
   const filePath = path.join(__dirname, 'api.js');
   const content = fs.readFileSync(filePath, 'utf8');
   res.type('text/plain').send(content);
+});
+
+// Temporary test route for POST
+router.post('/contact-test', (req, res) => {
+  console.log('contact-test route hit');
+  res.json({ message: 'contact-test works' });
 });
 
 module.exports = router;
