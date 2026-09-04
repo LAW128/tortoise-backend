@@ -9,16 +9,21 @@ const contactController = require('./controllers/contactController');
 // Import routes
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
-const apiRoutes = require('./routes/api');  // Public API
+const apiRoutes = require('./routes/api');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Ensure uploads directory exists (not used if using Cloudinary, but harmless)
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// ✅ CONTACT ROUTE – DIRECTLY ON APP, GUARANTEED TO WORK
+app.post('/api/contact', [
+  body('form_type').isIn(['support', 'volunteer']).withMessage('Invalid form type'),
+  body('full_name').notEmpty().withMessage('Full name is required'),
+  body('email').isEmail().withMessage('A valid email is required'),
+  body('message').optional()
+], (req, res, next) => {
+  console.log('✅ Direct contact route hit');
+  contactController.sendMessage(req, res, next);
+});
 
 // Middleware
 app.use(cors({
@@ -36,30 +41,18 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// ✅ CONTACT ROUTE DIRECTLY ON APP (guaranteed to work)
-app.post('/api/contact', [
-  body('form_type').isIn(['support', 'volunteer']).withMessage('Invalid form type'),
-  body('full_name').notEmpty().withMessage('Full name is required'),
-  body('email').isEmail().withMessage('A valid email is required'),
-  body('message').optional()
-], contactController.sendMessage);
-
-// Serve static frontend files (HTML, CSS, JS, images, sitemap, robots)
+// Serve static frontend files
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
-// Serve uploaded images (disabled because we use Cloudinary)
-//app.use('/uploads', express.static(uploadDir));
-
-// Mount routes
+// Mount routes (these still work for other endpoints)
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', apiRoutes);
 
-// Explicit SEO routes (optional but reliable)
+// Explicit SEO routes
 app.get('/sitemap.xml', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'sitemap.xml'));
 });
-
 app.get('/robots.txt', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'robots.txt'));
 });
@@ -83,11 +76,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal server error' });
 });
 
-// Catch uncaught exceptions and unhandled rejections to prevent crash
+// Catch uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('❌ Uncaught Exception:', err.message);
 });
-
 process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
 });
