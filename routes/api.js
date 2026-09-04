@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
+const contactController = require('../controllers/contactController');
 const heroController = require('../controllers/heroController');
 const highlightController = require('../controllers/highlightController');
 const newsController = require('../controllers/newsController');
@@ -41,5 +42,13 @@ router.post('/subscribe', [
 
 // Site settings
 router.get('/settings', siteSettingsController.get);
+
+// Contact form (support/volunteer)
+router.post('/contact', [
+  body('form_type').isIn(['support', 'volunteer']).withMessage('Invalid form type'),
+  body('full_name').notEmpty().withMessage('Full name is required'),
+  body('email').isEmail().withMessage('A valid email is required'),
+  body('message').optional()
+], contactController.sendMessage);
 
 module.exports = router;
