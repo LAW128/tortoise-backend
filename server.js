@@ -14,22 +14,17 @@ const apiRoutes = require('./routes/api');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ CONTACT ROUTE – DIRECTLY ON APP, GUARANTEED TO WORK
-app.post('/api/contact', [
-  body('form_type').isIn(['support', 'volunteer']).withMessage('Invalid form type'),
-  body('full_name').notEmpty().withMessage('Full name is required'),
-  body('email').isEmail().withMessage('A valid email is required'),
-  body('message').optional()
-], (req, res, next) => {
-  console.log('✅ Direct contact route hit');
-  contactController.sendMessage(req, res, next);
-});
-
-// Middleware
+// ========================
+// CORS FIRST – for all routes
+// ========================
 app.use(cors({
   origin: 'https://tortoise-project.onrender.com',
   credentials: true
 }));
+
+// ========================
+// Body parsers
+// ========================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -41,15 +36,32 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// Serve static frontend files
+// ========================
+// CONTACT ROUTE – directly on app
+// ========================
+app.post('/api/contact', [
+  body('form_type').isIn(['support', 'volunteer']).withMessage('Invalid form type'),
+  body('full_name').notEmpty().withMessage('Full name is required'),
+  body('email').isEmail().withMessage('A valid email is required'),
+  body('message').optional()
+], (req, res, next) => {
+  console.log('✅ Contact route hit');
+  contactController.sendMessage(req, res, next);
+});
+
+// ========================
+// Serve static frontend
+// ========================
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
-// Mount routes (these still work for other endpoints)
+// ========================
+// Mount other routes
+// ========================
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', apiRoutes);
 
-// Explicit SEO routes
+// SEO routes
 app.get('/sitemap.xml', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'sitemap.xml'));
 });
